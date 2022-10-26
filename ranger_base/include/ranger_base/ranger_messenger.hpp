@@ -75,7 +75,7 @@ class RangerMessenger {
 
     // cmd subscriber
     motion_cmd_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
-        "/cmd_vel", 10,
+        "mux/cmd_vel", 10,
         std::bind(&RangerMessenger::TwistCmdCallback, this,
                   std::placeholders::_1));
     ranger_setting_sub_= node_->create_subscription<interfaces::msg::RangerSetting>(
