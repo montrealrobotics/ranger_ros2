@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
   //   std::signal(SIGINT, DetachRobot);
 
   robot = std::make_shared<RangerBaseRos>("ranger");
-  while (true) {
+  while (robot->Initialize()) {
     // robot->Initialize();
 
     std::cout << "Robot initialized, start running ..." << std::endl;

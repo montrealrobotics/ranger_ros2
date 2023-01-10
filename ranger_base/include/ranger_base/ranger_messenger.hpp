@@ -18,7 +18,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <tf2_ros/transform_broadcaster.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <sensor_msgs/msg/battery_state.hpp>
 
 #include "ranger_base/ranger_params.hpp"
 
@@ -80,9 +81,40 @@ class RangerMessenger {
                   std::placeholders::_1));
     ranger_setting_sub_= node_->create_subscription<interfaces::msg::RangerSetting>(
       "/ranger_setting",10,std::bind(&RangerMessenger::RangerSettingCbk,this, std::placeholders::_1));
-    
+    battery_status_pub_ = node_->create_publisher<sensor_msgs::msg::BatteryState>(
+        "/base/battery", 10);
   }
+  void PublishBatteryStatus(){
+    current_time_ = node_->get_clock()->now();
 
+    static bool init_run = true;
+    if (init_run) {
+      last_time_ = current_time_;
+      init_run = false;
+      return;
+    }
+
+    auto state = ranger_->GetRobotState();
+    auto actuator = ranger_->GetActuatorState();
+    sensor_msgs::msg::BatteryState battery_msg;
+    battery_msg.header.stamp = current_time_;
+    battery_msg.header.frame_id = "battery";
+    battery_msg.current = (actuator.actuator_hs_state[0].current + actuator.actuator_hs_state[1].current)/2;
+    // if battery voltage is below 35 V, the max voltage is 29.4
+    // if battery voltage is above 35 V, the max voltage is 54.6V
+    // Min battery voltage is 20V
+    // Min battery voltage is 40V if battery voltage is above 30 V
+    battery_msg.voltage = state.system_state.battery_voltage; 
+    if (battery_msg.voltage < 35) {
+      battery_msg.percentage = (battery_msg.voltage - 23) / 6.4; // Current voltage - min, divided by difference between max and min
+      battery_msg.design_capacity = 30; // 30Ah
+    } else {
+      battery_msg.percentage = (battery_msg.voltage - 40) / 14.6;
+      battery_msg.design_capacity = 60; // 60Ah
+    }
+
+    battery_status_pub_->publish(battery_msg);
+  }
   void PublishStateToROS() {
     current_time_ = node_->get_clock()->now();
     uint8_t motion_mode_=0;
@@ -250,6 +282,7 @@ class RangerMessenger {
 
   uint8_t motion_mode_=0;
   bool simulated_robot_ = false;
+  bool battery_status_ = false;
   int sim_control_rate_ = 50;
 
   // westonrobot::SystemPropagator<BicycleKinematics> model_;
@@ -259,6 +292,7 @@ class RangerMessenger {
 
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<interfaces::msg::RangerStatus>::SharedPtr status_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::BatteryState>::SharedPtr battery_status_pub_;
   rclcpp::Subscription<interfaces::msg::RangerSetting>::SharedPtr ranger_setting_sub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr motion_cmd_sub_;
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
