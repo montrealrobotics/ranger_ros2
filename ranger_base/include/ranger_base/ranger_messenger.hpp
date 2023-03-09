@@ -115,9 +115,9 @@ class RangerMessenger {
       if (tmp_percentage < 0) {
         tmp_percentage = 0;
       } else if (tmp_percentage > 100) {
-        tmp_percentage = 100;
+        tmp_percentage = 1;
       } else {
-        battery_msg.percentage = tmp_percentage;
+        battery_msg.percentage = tmp_percentage / 100;
       }
       battery_msg.design_capacity = 30; // 30Ah
     } else {
@@ -132,9 +132,9 @@ class RangerMessenger {
       if (tmp_percentage < 0) {
         tmp_percentage = 0;
       } else if (tmp_percentage > 100) {
-        tmp_percentage = 100;
+        tmp_percentage = 1;
       } else {
-        battery_msg.percentage = tmp_percentage;
+        battery_msg.percentage = tmp_percentage / 100;
       }
     }
 
