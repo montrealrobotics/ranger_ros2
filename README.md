@@ -1,79 +1,101 @@
-# ROS2 Packages for Ranger Mobile Base
+# ROS2 Packages for Ranger Robot
 
-## Packages
+This repository contains ROS2 support packages for the Ranger robot bases to provide a ROS interface to the robot.
 
-* ranger_base: a ROS wrapper around ranger SDK to monitor and control the robot
-* ranger_msgs: ranger related message definitions
+## Supported hardware
 
+* Ranger Mini V1.0
+<img src="./docs/ranger_mini_v1.png" width="350" />
 
-## Communication interface setup
+* Ranger Mini V2.0
+<img src="./docs/ranger_mini_v2.png" width="350" />
 
-Please refer to the [README](https://github.com/indro-robotics/ugv_sdk#hardware-interface) of "ugv_sdk" package for setup of communication interfaces.
+* Ranger
+<img src="./docs/ranger.png" width="300" />
 
-#### Note on CAN interface on Nvidia Jetson Platforms
+## Build the package
 
-Nvidia Jeston TX2/Xavier/XavierNX have CAN controller(s) integrated in the main SOC. If you're using a dev kit, you need to add a CAN transceiver for proper CAN communication. 
+1. Install dependencies
 
-## Basic usage of the ROS package
+```bash
+$ sudo apt install libasio-dev libboost-all-dev
+```
 
+2. Clone and build the packages in a workspace
 
-1. Clone the packages into your catkin workspace and compile
-
-    (the following instructions assume your catkin workspace is at: ~/ros2_ws/src)
-
-    ```
-    cd ~/ros2_ws/src
-    git clone https://github.com/indro-robotics/ugv_sdk.git
-    git clone https://github.com/indro-robotics/ranger_ros2.git
-    cd ..
-    colcon build
-    ```
-    
-2. Setup CAN-To-USB adapter
+```
+$ cd ~/agilex_ws/src
+$ git clone https://github.com/westonrobot/ugv_sdk.git
+$ git clone https://github.com/agilexrobotics/ranger_ros2.git
+$ cd ..
+$ colcon build
+```
+3. Setup CAN-To-USB adapter
 
 * Enable gs_usb kernel module(If you have already added this module, you do not need to add it)
     ```
-    sudo modprobe gs_usb
+    $ sudo modprobe gs_usb
     ```
     
-* first time use ranger-ros2 package
+* first time use ranger-ros package
    ```
-   cd ~/your_ws/src/ugv_sdk/scripts/
-   bash setup_can2usb.bash
+   $ sudo bash /src/ranger_ros2/ranger_bringup/scripts/setup_can2usb.bash
    ```
    
-* if not the first time use ranger-ros2 package(Run this command every time you turn off the power) 
+* if not the first time use ranger-ros package(Run this command every time you turn off the power) 
    ```
-   cd ~/catkin_ws/src/ugv_sdk/scripts/
-   bash bringup_can2usb_500k.bash
+   $ sudo bash /src/ranger_ros2/ranger_bringup/scripts/bringup_can2usb.bash
    ```
    
 * Testing command
     ```
     # receiving data from can0
-    candump can0
+    $ candump can0
     ```
 
-3. Launch ROS nodes
+4. Launch ROS2 nodes
 
-* Start the base node for the real robot
+* Start the base node for ranger
 
-    ```
-    ros2 launch ranger_base ranger_base.launch.py
-    ```
-* Then you can send command to the robot
-    ```
-    ros2 topic pub /cmd_vel geometry_msgs/msg/Twist "linear:
-    x: 0.0
-    y: 0.0
-    z: 0.0
-    angular:
-    x: 0.0
-    y: 0.0
-    z: 0.0" 
-
+    ```shell
+    $ ros2 launch ranger_bringup ranger.launch #for ranger
     ```
 
-**SAFETY PRECAUSION**: 
+* Start the base node for ranger_mini_v1
 
-Always have your remote controller ready to take over the control whenever necessary. 
+    ```shell
+    $ ros2 launch ranger_bringup ranger_mini_v1.launch #for ranger_mini 1.0
+    ```
+
+* Start the base node for ranger_mini_v2
+
+    ```bash
+    $ ros2 launch ranger_bringup ranger_mini_v2.launch #for ranger_mini 2.0
+    ```
+
+
+## ROS interface
+
+### Parameters
+
+* can_device (string): **can0**
+* robot_model (string): **ranger**/ranger_mini_v1/ranger_mini_v2
+* update_rate (int): **50**
+* base_frame (string): **base_link**
+* odom_frame (string): **odom**
+* publish_odom_tf (bool): **true**
+* odom_topic_name (string): **odom**
+
+### Published topics
+
+* /system_state (ranger_msgs::SystemState)
+* /motion_state (ranger_msgs::MotionState)
+* /actuator_state (ranger_msgs::ActuatorStateArray)
+* /odom (nav_msgs::Odometry)
+* /battery_state (sensor_msgs::BatteryState)
+
+### Subscribed topics
+
+* /cmd_vel (geometry_msgs::Twist)
+
+### Services
