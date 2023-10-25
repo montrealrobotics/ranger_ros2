@@ -7,9 +7,9 @@
 * @copyright Copyright (c) 2023 Weston Robot Pte. Ltd.
 */
 
-#include "ranger_base/ranger_messenger.hpp"
+#include "/home/mostafa/humble_ws/src/ranger_ros2/ranger_base/include/ranger_base/ranger_messenger.hpp"
 
-#include "ranger_base/kinematics_model.hpp"
+#include "/home/mostafa/humble_ws/src/ranger_ros2/ranger_base/include/ranger_base/kinematics_model.hpp"
 
 using namespace rclcpp;
 using namespace ranger_msgs::msg;
@@ -233,7 +233,7 @@ void RangerROSMessenger::PublishStateToROS() {
 
   // publish BMS state
   {
-    auto common_sensor_state = robot_->GetCommonSensorState();
+    auto common_sensor_state = robot_->GetRobotState();
 
     sensor_msgs::msg::BatteryState batt_msg;
     batt_msg.header.stamp = current_time_;
