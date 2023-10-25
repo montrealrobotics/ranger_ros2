@@ -7,9 +7,9 @@
 * @copyright Copyright (c) 2023 Weston Robot Pte. Ltd.
 */
 
-#include "/home/mostafa/humble_ws/src/ranger_ros2/ranger_base/include/ranger_base/ranger_messenger.hpp"
+#include "ranger_base/ranger_messenger.hpp"
 
-#include "/home/mostafa/humble_ws/src/ranger_ros2/ranger_base/include/ranger_base/kinematics_model.hpp"
+#include "ranger_base/kinematics_model.hpp"
 
 using namespace rclcpp;
 using namespace ranger_msgs::msg;

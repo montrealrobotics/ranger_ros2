@@ -42,7 +42,7 @@
 #include "ranger_msgs/msg/driver_state.hpp"
 #include "ranger_msgs/msg/motor_state.hpp"
 
-#include "/home/mostafa/humble_ws/src/ranger_ros2/ranger_base/include/ranger_base/ranger_params.hpp"
+#include "ranger_base/ranger_params.hpp"
 
 namespace westonrobot {
 class RangerROSMessenger : public std::enable_shared_from_this<RangerROSMessenger>
