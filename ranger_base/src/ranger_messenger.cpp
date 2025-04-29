@@ -44,6 +44,7 @@ RangerROSMessenger::RangerROSMessenger(rclcpp::Node::SharedPtr& node){
   }
 
   SetupSubscription();
+  init_cmd_run_ = true;
 }
 
 void RangerROSMessenger::Run() {
@@ -130,7 +131,13 @@ void RangerROSMessenger::SetupSubscription() {
       node_->create_publisher<ranger_msgs::msg::MotionState>("/motion_state", 10);
   actuator_state_pub_ =
       node_->create_publisher<ranger_msgs::msg::ActuatorStateArray>("/actuator_state", 10);
-  odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>(odom_topic_name_, 10);
+  auto qos_realtime = rclcpp::QoS(
+        rclcpp::KeepLast(20))
+        .reliable()
+        .deadline(std::chrono::milliseconds(40))
+        .liveliness(rclcpp::LivelinessPolicy::Automatic)
+        .liveliness_lease_duration(std::chrono::seconds(1));
+  odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>(odom_topic_name_, qos_realtime);
   battery_state_pub_ =
       node_->create_publisher<sensor_msgs::msg::BatteryState>("/battery_state", 10);
 
@@ -138,6 +145,7 @@ void RangerROSMessenger::SetupSubscription() {
   motion_cmd_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
       "/mux/cmd_vel", 5, std::bind(&RangerROSMessenger::TwistCmdCallback, this, std::placeholders::_1)
       );
+  tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
 }
 
 void RangerROSMessenger::PublishStateToROS() {
@@ -361,7 +369,16 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
 void RangerROSMessenger::TwistCmdCallback(geometry_msgs::msg::Twist::SharedPtr msg) {
   double steer_cmd;
   double radius;
+  current_cmd_time_ = node_->get_clock()->now();
 
+  if (init_cmd_run_) {
+    last_cmd_time_ = current_cmd_time_;
+    init_cmd_run_ = false;
+    return;
+  }
+  double dt = (current_cmd_time_ - last_cmd_time_).seconds();
+  RCLCPP_DEBUG(node_->get_logger(),"dt: %f", dt);
+  last_cmd_time_ = current_cmd_time_;
   // analyze Twist msg and switch motion_mode
   if (msg->linear.y != 0) {
     if (msg->linear.x == 0.0 && robot_type_ == RangerSubType::kRangerMiniV1) {
