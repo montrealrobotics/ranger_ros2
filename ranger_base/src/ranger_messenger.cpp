@@ -151,8 +151,15 @@ void RangerROSMessenger::SetupSubscription() {
   actuator_state_pub_ =
       node_->create_publisher<ranger_msgs::msg::ActuatorStateArray>(
           "/actuator_state", 10);
+  auto qos_realtime = rclcpp::QoS(
+            rclcpp::KeepLast(20))
+            .reliable()
+            .deadline(std::chrono::milliseconds(40))
+            .liveliness(rclcpp::LivelinessPolicy::Automatic)
+            .liveliness_lease_duration(std::chrono::seconds(1));
+
   odom_pub_ =
-      node_->create_publisher<nav_msgs::msg::Odometry>(odom_topic_name_, 10);
+      node_->create_publisher<nav_msgs::msg::Odometry>(odom_topic_name_, qos_realtime);
   battery_state_pub_ = node_->create_publisher<sensor_msgs::msg::BatteryState>(
       "/battery_state", 10);
 
