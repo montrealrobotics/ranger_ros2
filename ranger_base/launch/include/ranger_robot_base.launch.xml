@@ -9,6 +9,7 @@
     <arg name="publish_odom_tf" default="false" />
 
     <node name="ranger_base_node" pkg="ranger_base" exec="ranger_base_node" output="both">
+        <remap from="/cmd_vel" to="/mux/cmd_vel"/>
         <param name="port_name"  value="$(var port_name)" />
         <param name="robot_model"  value="$(var robot_model)" />
         <param name="odom_frame"  value="$(var odom_frame)" />
