@@ -436,20 +436,24 @@ void RangerROSMessenger::TwistCmdCallback(
   if (parking_mode_ && robot_type_ == RangerSubType::kRangerMiniV2) {
     return;
   }
-  if (limit_mode_switch_){
-    if (std::abs(msg->linear.x) > 0.0){
-      // If any x velocity, do not switch to spinning mode
-      motion_mode_ = MotionState::MOTION_MODE_DUAL_ACKERMAN;
-      robot_->SetMotionMode(MotionState::MOTION_MODE_DUAL_ACKERMAN);
-      return;
-    }
-  }
 
   apply_deadband(msg->linear.x);
   apply_deadband(msg->linear.y);
   apply_deadband(msg->angular.z);
 
-  if (msg->linear.y != 0) {
+  if (limit_mode_switch_){
+    steer_cmd = CalculateSteeringAngle(*msg, radius);
+    if (std::abs(msg->linear.x) > 0.0){
+      // If any x velocity, do not switch to spinning mode
+      motion_mode_ = MotionState::MOTION_MODE_DUAL_ACKERMAN;
+      robot_->SetMotionMode(MotionState::MOTION_MODE_DUAL_ACKERMAN);
+    }
+    else {
+      motion_mode_ = MotionState::MOTION_MODE_SPINNING;
+      robot_->SetMotionMode(MotionState::MOTION_MODE_SPINNING);
+    }
+  }
+  else if (msg->linear.y != 0) {
     if (msg->linear.x == 0.0 && robot_type_ == RangerSubType::kRangerMiniV1) {
       motion_mode_ = MotionState::MOTION_MODE_SIDE_SLIP;
       robot_->SetMotionMode(MotionState::MOTION_MODE_SIDE_SLIP);
