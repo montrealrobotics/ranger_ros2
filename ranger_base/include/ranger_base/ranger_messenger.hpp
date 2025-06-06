@@ -98,9 +98,11 @@ class RangerROSMessenger : public std::enable_shared_from_this<RangerROSMessenge
   std::string odom_topic_name_;
   int update_rate_;
   bool publish_odom_tf_;
+  double deadband_;
 
   uint8_t motion_mode_ = 0;
   bool parking_mode_;
+  bool limit_mode_switch_;
 
   rclcpp::Publisher<ranger_msgs::msg::SystemState>::SharedPtr system_state_pub_;
   rclcpp::Publisher<ranger_msgs::msg::MotionState>::SharedPtr motion_state_pub_;

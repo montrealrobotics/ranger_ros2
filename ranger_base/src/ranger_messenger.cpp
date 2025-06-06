@@ -70,6 +70,8 @@ void RangerROSMessenger::LoadParameters() {
   odom_topic_name_ =
       node_->declare_parameter<std::string>("odom_topic_name", "odom");
   publish_odom_tf_ = node_->declare_parameter<bool>("publish_odom_tf", false);
+  deadband_ = node_->declare_parameter<double>("deadband", 0.0);
+  limit_mode_switch_ = node_->declare_parameter<bool>("limit_mode_switch", false);
 
   RCLCPP_INFO(
       node_->get_logger(),
@@ -425,11 +427,29 @@ void RangerROSMessenger::TwistCmdCallback(
   double steer_cmd;
   double radius;
 
+  auto apply_deadband = [this](double& value) {
+    if (std::abs(value) < deadband_) value = 0.0;
+  };
+
   // analyze Twist msg and switch motion_mode
   // check for parking mode, only applicable to RangerMiniV2
   if (parking_mode_ && robot_type_ == RangerSubType::kRangerMiniV2) {
     return;
-  } else if (msg->linear.y != 0) {
+  }
+  if (limit_mode_switch_){
+    if (std::abs(msg->linear.x) > 0.0){
+      // If any x velocity, do not switch to spinning mode
+      motion_mode_ = MotionState::MOTION_MODE_DUAL_ACKERMAN;
+      robot_->SetMotionMode(MotionState::MOTION_MODE_DUAL_ACKERMAN);
+      return;
+    }
+  }
+
+  apply_deadband(msg->linear.x);
+  apply_deadband(msg->linear.y);
+  apply_deadband(msg->angular.z);
+
+  if (msg->linear.y != 0) {
     if (msg->linear.x == 0.0 && robot_type_ == RangerSubType::kRangerMiniV1) {
       motion_mode_ = MotionState::MOTION_MODE_SIDE_SLIP;
       robot_->SetMotionMode(MotionState::MOTION_MODE_SIDE_SLIP);

@@ -7,6 +7,8 @@
     <arg name="update_rate" default="50" />
     <arg name="odom_topic_name" default="odom" />
     <arg name="publish_odom_tf" default="false" />
+    <arg name="deadband" default="0.0" />
+    <arg name="limit_mode_switch" default="false" />
 
     <node name="ranger_base_node" pkg="ranger_base" exec="ranger_base_node" output="both">
         <remap from="/cmd_vel" to="/mux/cmd_vel"/>
@@ -17,5 +19,7 @@
         <param name="update_rate"  value="$(var update_rate)" />
         <param name="odom_topic_name"  value="$(var odom_topic_name)" />  
         <param name="publish_odom_tf"  value="$(var publish_odom_tf)" />
+        <param name="deadband" value="$(var deadband)" />
+        <param name="limit_mode_switch" value="$(var limit_mode_switch)" />
     </node>
 </launch>
