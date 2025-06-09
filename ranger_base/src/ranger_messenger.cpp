@@ -70,7 +70,9 @@ void RangerROSMessenger::LoadParameters() {
   odom_topic_name_ =
       node_->declare_parameter<std::string>("odom_topic_name", "odom");
   publish_odom_tf_ = node_->declare_parameter<bool>("publish_odom_tf", false);
-  deadband_ = node_->declare_parameter<double>("deadband", 0.0);
+  deadband_linear_x_ = node_->declare_parameter<double>("deadband_linear_x", 0.0);
+  deadband_linear_y_ = node_->declare_parameter<double>("deadband_linear_y", 0.0);
+  deadband_angular_z_ = node_->declare_parameter<double>("deadband_angular_z", 0.0);
   limit_mode_switch_ = node_->declare_parameter<bool>("limit_mode_switch", false);
 
   RCLCPP_INFO(
@@ -78,10 +80,13 @@ void RangerROSMessenger::LoadParameters() {
       "Successfully loaded the following parameters: \n port_name: %s\n "
       "robot_model: %s\n odom_frame: %s\n base_frame: %s\n "
       "update_rate: %d\n odom_topic_name: %s\n "
-      "publish_odom_tf: %d\n",
+      "publish_odom_tf: %d\n "
+      "deadband_linear_x: %g\n "
+      "deadband_linear_y: %g\n "
+      "deadband_angular_z: %g\n ",
       port_name_.c_str(), robot_model_.c_str(), odom_frame_.c_str(),
       base_frame_.c_str(), update_rate_, odom_topic_name_.c_str(),
-      publish_odom_tf_);
+      publish_odom_tf_, deadband_linear_x_, deadband_linear_y_, deadband_angular_z_);
 
   // load robot parameters
   if (robot_model_ == "ranger_mini_v1") {
@@ -427,8 +432,8 @@ void RangerROSMessenger::TwistCmdCallback(
   double steer_cmd;
   double radius;
 
-  auto apply_deadband = [this](double& value) {
-    if (std::abs(value) < deadband_) value = 0.0;
+  auto apply_deadband = [](double& value, double deadband) {
+    if (std::abs(value) < deadband) value = 0.0;
   };
 
   // analyze Twist msg and switch motion_mode
@@ -437,9 +442,9 @@ void RangerROSMessenger::TwistCmdCallback(
     return;
   }
 
-  apply_deadband(msg->linear.x);
-  apply_deadband(msg->linear.y);
-  apply_deadband(msg->angular.z);
+  apply_deadband(msg->linear.x, deadband_linear_x_);
+  apply_deadband(msg->linear.y, deadband_linear_y_);
+  apply_deadband(msg->angular.z, deadband_angular_z_);
 
   if (limit_mode_switch_){
     steer_cmd = CalculateSteeringAngle(*msg, radius);
